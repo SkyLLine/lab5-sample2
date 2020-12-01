@@ -1,42 +1,36 @@
-%option noyywrap
+%option nounput
 %{
 #include "common.h"
 #include "main.tab.h"  // yacc header
 int lineno=1;
 %}
-EOL	(\r\n|\r|\n)
 
+BLOCKCOMMENT \/\*([^\*^\/]*|[\*^\/*]*|[^\**\/]*)*\*\/
+LINECOMMENT \/\/[^\n]*
+
+EOL	(\r\n|\r|\n)
+WHITESPACE [\t ]
+
+STRING \".+\"
 INTEGER 0|[1-9][0-9]*
 IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 
-ENDCOMMENT "*/"
-WHITESPACE [\t ]
-STRING \"[^\"]*\"
-COMMENTELEMENT .|\n
-LINECOMMENTELEMENT .
 
-%x COMMENT
-%x LINECOMMENT
+
 %%
 
 
-"/*" BEGIN COMMENT;
-<COMMENT>{COMMENTELEMENT}
-<Comment>{ENDCOMMENT}{BEGIN INITIAL;}
-
-"//" BEGIN LINECOMMENT;
-<LINECOMMENT>{LINECOMMENTELEMENT}
-<LINECOMMENT>{EOL}{BEGIN INITIAL;}
+{BLOCKCOMMENT}  /* do nothing */
+{LINECOMMENT}  /* do nothing */
 
 
 
-"int" return INT;
-"bool" return BOOL;
-"char" return CHAR;
-"void" return VOID;
-"string" return STRING;
+"int" return T_INT;
+"bool" return T_BOOL;
+"char" return T_CHAR;
+"string" return T_STRING;
 
-"main" return MAIN;
+
 
 "if" return IF;
 "for" return FOR;
@@ -54,7 +48,7 @@ LINECOMMENTELEMENT .
 "/" return DIV;
 "%" return MOD;
  
-"~" return REV;
+
 "!" return NOT;
 "!=" return NOTEQUAL;
 "&&" return AND;
@@ -84,6 +78,20 @@ LINECOMMENTELEMENT .
     return INTEGER;
 }
 
+{STRING} {
+    TreeNode* node = new TreeNode(lineno, NODE_CONST);
+    node->type = TYPE_STRING;
+    int i;
+    for(i=1;yytext[i]!='\"';i++)
+    {
+      node->str_val+=(char)yytext[i];
+    }
+    node->str_val[i] = '\0';
+    node->cotype = CONST_STRING;
+    yylval = node;
+    return STRING;
+}
+
 {IDENTIFIER} {
     TreeNode* node = new TreeNode(lineno, NODE_VAR);
     node->var_name = string(yytext);
@@ -91,21 +99,7 @@ LINECOMMENTELEMENT .
     return IDENTIFIER;
 }
 
-{STRING}{
-    TreeNode* node = new TreeNode(lineno, NODE_CONST);
-    node->type = TYPE_STRING;
-    int i = 1;
-    while(yytext[i] != '"')
-    {
-      node->str_val[i-1] = yytext[i];
-      i++;
-    }
-    node->str_val[i-1] = '\0';
-    node->cotype = CONST_STRING;
-    yylval = node;
-    return STRING;
-}
-{WHILTESPACE} /* do nothing */
+{WHITESPACE} /* do nothing */
 
 {EOL} lineno++;
 

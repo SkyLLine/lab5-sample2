@@ -18,8 +18,6 @@
 
 %token ASSIGN 
 
-%token SEMICOLON
-
 %token IDENTIFIER INTEGER CHAR BOOL STRING
 
 %left GREATER LESS EQUAL NOTEQUAL GREATEROREQUAL LESSOREQUAL
@@ -38,13 +36,13 @@ program
 statements
 :  statement {$$=$1;}
 |  statements statement {$$=$1; $$->addSibling($2);}
-|  LBRACE statements RBRACEP{$$ = $2;}
+|  LBRACE statements RBRACE{$$ = $2;}
 ;
 
 statement
 : SEMICOLON  {$$ = new TreeNode(lineno, NODE_STMT); $$->stype = STMT_SKIP;}
 | declaration SEMICOLON {$$ = $1;}
-| assign SEMICOLON {$$ = $1;}
+| instruction SEMICOLON {$$ = $1;}
 | if_else {$$ = $1;}
 | if {$$ = $1;}
 | while {$$ = $1;}
@@ -53,7 +51,7 @@ statement
 ;
 
 scanf
-: SCANF LPAREN STRING RPAREN{
+: SCANF LPAREN STRING RPAREN SEMICOLON{
     $$ = new TreeNode(lineno, NODE_STMT);
     $$->stype = STMT_SCANF;
     $$->addChild($3);
@@ -61,7 +59,7 @@ scanf
 ;
 
 printf
-: PRINTF LPAREN STRING RPAREN{
+: PRINTF LPAREN STRING RPAREN SEMICOLON{
     $$ = new TreeNode(lineno, NODE_STMT);
     $$->stype = STMT_PRINTF;
     $$->addChild($3);
@@ -174,7 +172,7 @@ declaration
 }
 | T idlist{
     $$ = new TreeNode(lineno, NODE_STMT);
-    $$->STYPE = STMT_DECL;
+    $$->stype = STMT_DECL;
     $$->addChild($1);
     $$->addChild($2);
 }
@@ -190,6 +188,13 @@ instructions
 }
 ;
 
+instruction
+: IDENTIFIER ASSIGN expr{
+    $$ = new TreeNode(lineno, NODE_STMT);
+    $$->stype = STMT_ASSIGN;
+    $$->addChild($1);
+    $$->addChild($3);
+}
 idlist
 :
 idlist COMMA IDENTIFIER{
