@@ -1,33 +1,78 @@
-%option nounput
+%option noyywrap
 %{
 #include "common.h"
 #include "main.tab.h"  // yacc header
 int lineno=1;
 %}
-BLOCKCOMMENT \/\*([^\*^\/]*|[\*^\/*]*|[^\**\/]*)*\*\/
-LINECOMMENT \/\/[^\n]*
 EOL	(\r\n|\r|\n)
-WHILTESPACE [[:blank:]]
 
-INTEGER [0-9]+
+INTEGER 0|[1-9][0-9]*
+ID [[:alpha:]_][[:alpha:][:digit:]_]*
 
-CHAR \'.?\'
-STRING \".+\"
+ENDCOMMENT "*/"
+WHITESPACE [\t ]
+STRING \"[^\"]*\"
+COMMENTELEMENT .|\n
+LINECOMMENTELEMENT .
 
-IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
+%x COMMENT
+%x LINECOMMENT
 %%
 
-{BLOCKCOMMENT}  /* do nothing */
-{LINECOMMENT}  /* do nothing */
+
+"/*" BEGIN COMMENT;
+<COMMENT>{COMMENTELEMENT}
+<Comment>{ENDCOMMENT}{BEGIN INITIAL;}
+
+"//" BEGIN LINECOMMENT;
+<LINECOMMENT>{LINECOMMENTELEMENT}
+<LINECOMMENT>{EOL}{BEGIN INITIAL;}
 
 
-"int" return T_INT;
-"bool" return T_BOOL;
-"char" return T_CHAR;
 
-"=" return LOP_ASSIGN;
+"int" return INT;
+"bool" return BOOL;
+"char" return CHAR;
+"void" return VOID;
+"string" return STRING;
 
-";" return  SEMICOLON;
+"main" return MAIN;
+
+"if" return IF;
+"for" return FOR;
+"else" return ELSE;
+"return" return RETURN;
+
+"printf" return PRINTF;
+"scanf" return SCANF;
+
+"=" return ASSIGN;
+"+" return ADD;
+"-" return SUB;
+"*" return MUL;
+"/" return DIV;
+"%" return MOD;
+ 
+"~" return REV;
+"!" return NOT;
+"&&" return AND;
+"||" return OR;
+"==" return EQUAL;
+"<" return LESS;
+"<=" return LESSOREQUAL;
+">" return GREATER;
+">=" return GREATEROREQUAL;
+
+";" return SEMICOLON;
+"(" return LPAREN;
+")" return RPAREN;
+"{" return LBRACE;
+"}" return RBRACE;
+"[" return LBRACK;
+"]" return RBRACK;
+
+"," return COMMA;
+
 
 {INTEGER} {
     TreeNode* node = new TreeNode(lineno, NODE_CONST);
@@ -45,14 +90,14 @@ IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
     return CHAR;
 }
 
-{IDENTIFIER} {
+{ID} {
     TreeNode* node = new TreeNode(lineno, NODE_VAR);
     node->var_name = string(yytext);
     yylval = node;
     return IDENTIFIER;
 }
 
-{WHILTESPACE} /* do nothing */
+{WHITESPACE} /* do nothing */
 
 {EOL} lineno++;
 
