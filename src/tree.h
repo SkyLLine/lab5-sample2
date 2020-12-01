@@ -98,6 +98,7 @@ public:
      string opType2String ();
      string sType2String ();
      string coType2String();
+     string Type2String();
 
 public:
     TreeNode(int lineno, NodeType type);

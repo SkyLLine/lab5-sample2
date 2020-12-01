@@ -7,7 +7,7 @@ int lineno=1;
 EOL	(\r\n|\r|\n)
 
 INTEGER 0|[1-9][0-9]*
-ID [[:alpha:]_][[:alpha:][:digit:]_]*
+IDENTIFIER [[:alpha:]_][[:alpha:][:digit:]_]*
 
 ENDCOMMENT "*/"
 WHITESPACE [\t ]
@@ -84,7 +84,7 @@ LINECOMMENTELEMENT .
     return INTEGER;
 }
 
-{ID} {
+{IDENTIFIER} {
     TreeNode* node = new TreeNode(lineno, NODE_VAR);
     node->var_name = string(yytext);
     yylval = node;

@@ -22,7 +22,7 @@
 
 %token IDENTIFIER INTEGER CHAR BOOL STRING
 
-%left GREATER LESS EQUAL NOTEQUAL
+%left GREATER LESS EQUAL NOTEQUAL GREATEROREQUAL LESSOREQUAL
 
 %left ADD SUB
 %left MUL DIV MOD
@@ -124,35 +124,133 @@ bool_instructions
 
 | bool_instruction{$$ = $1;}
 ;
+
 bool_instruction
-: 
-declaration
-: T IDENTIFIER LOP_ASSIGN expr{  // declare and init
-    TreeNode* node = new TreeNode($1->lineno, NODE_STMT);
-    node->stype = STMT_DECL;
-    node->addChild($1);
-    node->addChild($2);
-    node->addChild($4);
-    $$ = node;   
-} 
-| T IDENTIFIER {
-    TreeNode* node = new TreeNode($1->lineno, NODE_STMT);
-    node->stype = STMT_DECL;
-    node->addChild($1);
-    node->addChild($2);
-    $$ = node;   
+: expr{$$=$1;}
+| bool_instruction LESS bool_instruction{
+    $$ = new TreeNode(lineno, NODE_EXPR);
+    $$->optype = OP_LS;
+    $$->addChild($1);
+    $$->addChild($3);
+}
+| bool_instruction GREATER bool_instruction{
+    $$ = new TreeNode(lineno, NODE_EXPR);
+    $$->optype = OP_GR;
+    $$->addChild($1);
+    $$->addChild($3);
+}
+| bool_instruction GREATEROREQUAL bool_instruction{
+    $$ = new TreeNode(lineno, NODE_EXPR);
+    $$->optype = OP_GE;
+    $$->addChild($1);
+    $$->addChild($3);
+}
+| bool_instruction LESSOREQUAL bool_instruction{
+    $$ = new TreeNode(lineno, NODE_EXPR);
+    $$->optype = OP_LE;
+    $$->addChild($1);
+    $$->addChild($3);
+}
+| bool_instruction NOTEQUAL bool_instruction{
+    $$ = new TreeNode(lineno, NODE_EXPR);
+    $$->optype = OP_NE;
+    $$->addChild($1);
+    $$->addChild($3);
+}
+| bool_instruction EQUAL bool_instruction{
+    $$ = new TreeNode(lineno, NODE_EXPR);
+    $$->optype = OP_LE;
+    $$->addChild($1);
+    $$->addChild($3);
 }
 ;
 
+declaration
+: T instructions SEMICOLON{
+    $$ = new TreeNode(lineno, NODE_STMT);
+    $$->stype = STMT_DECL;
+    $$->addChild($1);
+    $$->addChild($2);
+}
+| T idlist{
+    $$ = new TreeNode(lineno, NODE_STMT);
+    $$->STYPE = STMT_DECL;
+    $$->addChild($1);
+    $$->addChild($2);
+}
+;
+
+instructions
+: instructions COMMA instruction{
+    $$ = $1;
+    $$->addSibling($3);
+}
+| instruction{
+    $$ = $1;
+}
+;
+
+idlist
+:
+idlist COMMA IDENTIFIER{
+    $$ = $1;
+    $$->addSibling($3);
+}
+| IDENTIFIER{
+    $$ = $1;
+}
+;
+
+exprs
+: exprs COMMA expr{
+    $$=$1;
+    $$->addSibling($3);
+}
+| expr{ $$ = $1; }
+;
+
 expr
-: IDENTIFIER {
+: LPAREN expr RPAREN{
+    $$= $2;
+}
+| expr ADD expr{
+    $$=new TreeNode($1->lineno,NODE_EXPR);
+    $$->optype=OP_ADD;
+    $$->addChild($1);
+    $$->addChild($3);
+}
+| expr SUB expr{
+    $$=new TreeNode($1->lineno,NODE_EXPR);
+    $$->optype=OP_SUB;
+    $$->addChild($1);
+    $$->addChild($3);
+}
+| expr MUL expr{
+    $$=new TreeNode($1->lineno,NODE_EXPR);
+    $$->optype=OP_MUL;
+    $$->addChild($1);
+    $$->addChild($3);
+}
+| expr DIV expr{
+    $$=new TreeNode($1->lineno,NODE_EXPR);
+    $$->optype=OP_DIV;
+    $$->addChild($1);
+    $$->addChild($3);
+}
+| expr MOD expr{
+    $$=new TreeNode($1->lineno,NODE_EXPR);
+    $$->optype=OP_MOD;
+    $$->addChild($1);
+    $$->addChild($3);
+}
+|IDENTIFIER {
     $$ = $1;
 }
 | INTEGER {
     $$ = $1;
 }
 | CHAR {
-    $$ = $1;
+    $$ =$1;
 }
 | STRING {
     $$ = $1;

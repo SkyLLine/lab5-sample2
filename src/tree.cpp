@@ -48,11 +48,16 @@ void TreeNode::printNodeInfo() {
 }
 
 void TreeNode::printChildrenId() {
-
+for(TreeNode *t=this->child;t!=nullptr;t=t->sibling)
+        cout<<" @"<<t->nodeID;
 }
 
 void TreeNode::printAST() {
-
+this->printNodeInfo();
+    if(this->child!=nullptr)
+        this->child->printAST();
+    if(this->sibling!=nullptr)
+        this->sibling->printAST();
 }
 
 
@@ -60,20 +65,32 @@ void TreeNode::printAST() {
 void TreeNode::printSpecialInfo() {
     switch(this->nodeType){
         case NODE_CONST:
-            break;
+            {cout<<coType2String();return;}
         case NODE_VAR:
-            break;
+            {cout<<this->var_name;return;}
         case NODE_EXPR:
-            break;
+            {cout<<opType2String();return;}
         case NODE_STMT:
-            break;
+            {cout<<sType2String();return;}
         case NODE_TYPE:
-            break;
+            {cout<<Type2String();return;}
         default:
             break;
     }
 }
 
+string TreeNode::Type2String(){
+
+    switch(this->cotype){
+        case CONST_INT:
+            return "const: int ";
+        case CONST_STRING:
+            return "const: string \"";
+        
+        default:
+            return "unknown const type";
+    }
+}
 string TreeNode::sType2String() {
     switch (this->stype)
     {
