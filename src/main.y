@@ -46,13 +46,86 @@ statement
 | declaration SEMICOLON {$$ = $1;}
 | assign SEMICOLON {$$ = $1;}
 | if_else {$$ = $1;}
+| if {$$ = $1;}
 | while {$$ = $1;}
 | printf {$$ = $1;}
 | scanf {$$ = $1;}
 ;
 
 scanf
-: SCANF LPAREN STRING 
+: SCANF LPAREN STRING RPAREN{
+    $$ = new TreeNode(lineno, NODE_STMT);
+    $$->stype = STMT_SCANF;
+    $$->addChild($3);
+}
+;
+
+printf
+: PRINTF LPAREN STRING RPAREN{
+    $$ = new TreeNode(lineno, NODE_STMT);
+    $$->stype = STMT_PRINTF;
+    $$->addChild($3);
+}
+;
+
+while
+: WHILE bool_instruction statements{
+    TreeNode *node = new TreeNode(lineno, NODE_STMT);
+    node->stype = STMT_WHILE;
+    node->addChild($2);
+    node->addChild($3);
+    $$ = node;
+}
+;
+
+if_else
+: IF bool_instruction statements ELSE statements{
+    TreeNode *node = new TreeNode(lineno, NODE_STMT);
+    node->stype = STMT_IF;
+    node->addChild($2);
+    node->addChild($3);
+    node->addChild($5);
+    $$ = node;
+}
+;
+
+if
+: IF bool_instruction statements{
+    TreeNode *node = new TreeNode(lineno, NODE_STMT);
+    node->stype = STMT_IF;
+    node->addChild($2);
+    node->addChild($3);
+    $$ = node;
+}
+;
+
+bool_instructions
+: LPAREN bool_instructions LPAREN{$$ = $2;}
+| bool_instructions OR bool_instructions{
+    TreeNode *node = new TreeNode(lineno, NODE_EXPR);
+    $$ = node;
+    $$->optype = OP_OR;
+    $$->addChild($1);
+    $$->addChild($3);
+}
+| bool_instructions AND bool_instructions{
+    TreeNode *node = new TreeNode(lineno, NODE_EXPR);
+    $$ = node;
+    $$->optype = OP_AND;
+    $$->addChild($1);
+    $$->addChild($3);
+}
+| NOT bool_instructions{
+    TreeNode *node = new TreeNode(lineno, NODE_EXPR);
+    $$ = node;
+    $$->optype = OP_NOT;
+    $$->addChild($2);
+}
+
+| bool_instruction{$$ = $1;}
+;
+bool_instruction
+: 
 declaration
 : T IDENTIFIER LOP_ASSIGN expr{  // declare and init
     TreeNode* node = new TreeNode($1->lineno, NODE_STMT);
