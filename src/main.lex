@@ -41,6 +41,7 @@ LINECOMMENTELEMENT .
 "if" return IF;
 "for" return FOR;
 "else" return ELSE;
+"while" return WHILE;
 "return" return RETURN;
 
 "printf" return PRINTF;
@@ -55,6 +56,7 @@ LINECOMMENTELEMENT .
  
 "~" return REV;
 "!" return NOT;
+"!=" return NOTEQUAL;
 "&&" return AND;
 "||" return OR;
 "==" return EQUAL;
@@ -63,7 +65,6 @@ LINECOMMENTELEMENT .
 ">" return GREATER;
 ">=" return GREATEROREQUAL;
 
-";" return SEMICOLON;
 "(" return LPAREN;
 ")" return RPAREN;
 "{" return LBRACE;
@@ -72,6 +73,7 @@ LINECOMMENTELEMENT .
 "]" return RBRACK;
 
 "," return COMMA;
+";" return SEMICOLON;
 
 
 {INTEGER} {
@@ -82,14 +84,6 @@ LINECOMMENTELEMENT .
     return INTEGER;
 }
 
-{CHAR} {
-    TreeNode* node = new TreeNode(lineno, NODE_CONST);
-    node->type = TYPE_CHAR;
-    node->int_val = yytext[1];
-    yylval = node;
-    return CHAR;
-}
-
 {ID} {
     TreeNode* node = new TreeNode(lineno, NODE_VAR);
     node->var_name = string(yytext);
@@ -97,7 +91,21 @@ LINECOMMENTELEMENT .
     return IDENTIFIER;
 }
 
-{WHITESPACE} /* do nothing */
+{STRING}{
+    TreeNode* node = new TreeNode(lineno, NODE_CONST);
+    node->type = TYPE_STRING;
+    int i = 1;
+    while(yytext[i] != '"')
+    {
+      node->str_val[i-1] = yytext[i];
+      i++;
+    }
+    node->str_val[i-1] = '\0';
+    node->cotype = CONST_STRING;
+    yylval = node;
+    return STRING;
+}
+{WHILTESPACE} /* do nothing */
 
 {EOL} lineno++;
 

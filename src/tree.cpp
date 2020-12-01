@@ -4,12 +4,10 @@ void TreeNode::addChild(TreeNode* child) {
   if(this->child == nullptr)
   {
       this->child = child;
-      this->child->father = this;
   }
   else
   {
     this->child->addSibling(child);
-    child->father = this;
   }
 }
 
@@ -42,7 +40,11 @@ void TreeNode::genNodeId() {
 }
 
 void TreeNode::printNodeInfo() {
-    string print
+    cout<<lineno<<"\t@"<<nodeID<<"\t"<<nodeType2String()<<"\tchildren:";
+    printChildrenId();
+    cout<<'\t';
+    printSpecialInfo();
+    cout<<endl;
 }
 
 void TreeNode::printChildrenId() {
@@ -72,11 +74,134 @@ void TreeNode::printSpecialInfo() {
     }
 }
 
-string TreeNode::sType2String(StmtType type) {
+string TreeNode::sType2String() {
+    switch (this->stype)
+    {
+    case STMT_SKIP:
+    return "empty stmt";
+    case STMT_DECL:
+    return "declare stmt";
+    case STMT_IF:
+    return "if stmt";
+    case STMT_ELSE:
+    return "else stmt";
+    case STMT_WHILE:
+    return "else stmt";
+    case STMT_ASSIGN:
+    return "assign stmt";
+    case STMT_ADD:
+    return "add stmt";
+    case STMT_SUB:
+    return "sub stmt";   
+    case STMT_DIV:
+    return "div stmt";
+    case STMT_MUL:
+    return "mul stmt";
+    case STMT_MOD:
+    return "mod stmt";
+    case STMT_FOR:
+    return "for stmt";
+    case STMT_SCANF:
+    return "scanf stmt";
+    case STMT_PRINTF:
+    return "printf stmt"; 
+    case STMT_RETURN:
+    return "return stmt";
+
+    default:
+        return "unknown stmt";
+    }
     return "?";
 }
 
+/*
+  STMT_SKIP,
+    STMT_DECL,
+    STMT_IF,
+    STMT_ELSE,
+    STMT_WHILE,
+    STMT_ASSIGN,
+    STMT_ADD,
+    STMT_SUB,
+    STMT_DIV,
+    STMT_MUL,
+    STMT_MOD,
+    STMT_FOR,
+    STMT_SCANF,
+    STMT_PRINTF,
+    STMT_DOMAIN
 
-string TreeNode::nodeType2String (NodeType type){
+*/
+string TreeNode::nodeType2String (){
+    switch(this->nodeType)
+    {
+        case NODE_CONST:
+        return "const";
+        case NODE_EXPR:
+        return "expr";
+        case NODE_STMT:
+        return "statement";
+        case NODE_PROG:
+        return "program";
+        case NODE_TYPE:
+        return "type";
+        case NODE_MAIN:
+        return "main";
+
+        default:
+           return "unknown";
+    }
     return "<>";
+}
+
+string TreeNode::coType2String(){
+    switch(this->cotype)
+    {
+        case CONST_INT:
+        return "const int";
+        case CONST_STRING:
+        return "const string";
+
+        default:
+        return "unknown const";
+    }
+    return "?";
+}
+
+string TreeNode:: opType2String()
+{
+    string a="op: ";
+    switch(this->optype)
+    {
+        case OP_EQ:
+            return "op: ==";
+        case OP_GR:
+            return "op: >";
+        case OP_LS:
+            return "op: <";
+        case OP_GE:
+            return "op: >=";
+        case OP_LE:
+            return "op: <=";
+        case OP_NE:
+            return "op: !=";
+        case OP_ADD:
+            return "op: +";
+        case OP_SUB:
+            return "op: -";
+        case OP_MUL:
+            return "op: *";
+        case OP_DIV:
+            return "op: /";
+        case OP_MOD:
+            return "op: %";
+        case OP_AND:
+            return "op: &&";
+        case OP_OR:
+            return "op: ||";
+        case OP_NOT:
+            return "op: !";
+        default:
+            return "unknown op";
+    }
 }

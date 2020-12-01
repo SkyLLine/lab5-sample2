@@ -12,6 +12,7 @@ enum NodeType
     NODE_TYPE,
     NODE_STMT,
     NODE_PROG,
+    NODE_MAIN,
 };
 
 enum OperatorType
@@ -36,6 +37,11 @@ enum OperatorType
     OP_SSUB,
 };
 
+enum ConstType{
+    CONST_INT,
+    CONST_STRING
+};
+
 enum StmtType {
     STMT_SKIP,
     STMT_DECL,
@@ -51,7 +57,8 @@ enum StmtType {
     STMT_FOR,
     STMT_SCANF,
     STMT_PRINTF,
-    STMT_DOMAIN
+    STMT_DOMAIN,
+    STMT_RETURN
 
 }
 ;
@@ -62,7 +69,6 @@ public:
     int lineno;
     NodeType nodeType;
     
-    TreeNode* father = nullptr;
     TreeNode* child = nullptr;
     TreeNode* sibling = nullptr;
 
@@ -78,6 +84,7 @@ public:
     void genNodeId();
 
 public:
+    ConstType cotype;
     OperatorType optype;  // 如果是表达式
     Type* type;  // 变量、类型、表达式结点，有类型。
     StmtType stype;
@@ -87,9 +94,10 @@ public:
     string str_val;
     string var_name;
 public:
-    static string nodeType2String (NodeType type);
-    static string opType2String (OperatorType type);
-    static string sType2String (StmtType type);
+     string nodeType2String ();
+     string opType2String ();
+     string sType2String ();
+     string coType2String();
 
 public:
     TreeNode(int lineno, NodeType type);

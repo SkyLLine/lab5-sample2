@@ -8,13 +8,27 @@
 %}
 %token T_CHAR T_INT T_STRING T_BOOL 
 
-%token LOP_ASSIGN 
+%token PRINTF SCANF
+
+%token IF ELSE WHILE FOR RETURN
+
+%token SEMICOLON COMMA
+
+%token LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK
+
+%token ASSIGN 
 
 %token SEMICOLON
 
 %token IDENTIFIER INTEGER CHAR BOOL STRING
 
-%left LOP_EQ
+%left GREATER LESS EQUAL NOTEQUAL
+
+%left ADD SUB
+%left MUL DIV MOD
+%left OR
+%left AND 
+%right NOT
 
 %%
 
@@ -24,13 +38,21 @@ program
 statements
 :  statement {$$=$1;}
 |  statements statement {$$=$1; $$->addSibling($2);}
+|  LBRACE statements RBRACEP{$$ = $2;}
 ;
 
 statement
 : SEMICOLON  {$$ = new TreeNode(lineno, NODE_STMT); $$->stype = STMT_SKIP;}
 | declaration SEMICOLON {$$ = $1;}
+| assign SEMICOLON {$$ = $1;}
+| if_else {$$ = $1;}
+| while {$$ = $1;}
+| printf {$$ = $1;}
+| scanf {$$ = $1;}
 ;
 
+scanf
+: SCANF LPAREN STRING 
 declaration
 : T IDENTIFIER LOP_ASSIGN expr{  // declare and init
     TreeNode* node = new TreeNode($1->lineno, NODE_STMT);
