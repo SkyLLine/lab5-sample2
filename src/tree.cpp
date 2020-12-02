@@ -7,7 +7,12 @@ void TreeNode::addChild(TreeNode* child) {
   }
   else
   {
-    this->child->addSibling(child);
+    TreeNode *p = this->child;
+    while(p->sibling != nullptr)
+    {
+        p = p->sibling;
+    }
+    p->sibling = child;
   }
 }
 
@@ -65,7 +70,7 @@ this->printNodeInfo();
 void TreeNode::printSpecialInfo() {
     switch(this->nodeType){
         case NODE_CONST:
-            {cout<<coType2String();return;}
+            {cout<<coType2String()<<" "<<this->int_val;return;}
         case NODE_VAR:
             {cout<<this->var_name;return;}
         case NODE_EXPR:
@@ -103,7 +108,7 @@ string TreeNode::sType2String() {
     case STMT_ELSE:
     return "else stmt";
     case STMT_WHILE:
-    return "else stmt";
+    return "while stmt";
     case STMT_ASSIGN:
     return "assign stmt";
     case STMT_ADD:
@@ -124,7 +129,12 @@ string TreeNode::sType2String() {
     return "printf stmt"; 
     case STMT_RETURN:
     return "return stmt";
-
+    case STMT_ADD_ASSIGN:
+    return "add_assign stmt";
+    case STMT_SUB_ASSIGN:
+    return "sub_assign stmt";
+    case STMT_BLOCK:
+    return "block stmt";
     default:
         return "unknown stmt";
     }
@@ -164,6 +174,8 @@ string TreeNode::nodeType2String (){
         return "type";
         case NODE_MAIN:
         return "main";
+        case NODE_VAR:
+        return "variable";
 
         default:
            return "unknown";
@@ -218,7 +230,32 @@ string TreeNode:: opType2String()
             return "op: ||";
         case OP_NOT:
             return "op: !";
+        case OP_AD:
+            return "OP: &";
         default:
             return "unknown op";
     }
+}
+
+void BlockNode::addChild(BlockNode* child)
+{
+  if(this->child == nullptr)
+  {
+      this->child = child;
+  }
+  else
+  {
+    BlockNode *p = this->child;
+    while(p->sibling != nullptr)
+    {
+        p = p->sibling;
+    }
+    p->sibling = child;
+  }
+  child->father = this;
+}
+
+BlockNode::BlockNode(int nodeID)
+{
+    this->nodeID = nodeID;
 }

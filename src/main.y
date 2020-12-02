@@ -6,7 +6,9 @@
     int yylex();
     int yyerror( char const * );
 %}
-%token T_CHAR T_INT T_STRING T_BOOL 
+%token T_CHAR T_INT T_STRING T_BOOL
+ 
+%token MAIN VOID
 
 %token PRINTF SCANF
 
@@ -16,9 +18,11 @@
 
 %token LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK
 
-%token ASSIGN 
+%token ASSIGN ADD_ASSIGN SUB_ASSIGN SADD SSUB 
 
 %token IDENTIFIER INTEGER CHAR BOOL STRING
+
+%token UP_THAN_ELSE ADDRESS
 
 %left GREATER LESS EQUAL NOTEQUAL GREATEROREQUAL LESSOREQUAL
 
@@ -27,6 +31,9 @@
 %left OR
 %left AND 
 %right NOT
+%left SADD SSUB
+
+%token NSUB NADD
 
 %%
 
@@ -34,27 +41,84 @@ program
 : statements {root = new TreeNode(0, NODE_PROG); root->addChild($1);};
 
 statements
-:  statement {$$=$1;}
+:  VOID MAIN LPAREN RPAREN block{
+    $$ = $5;
+} 
+|  statement {$$=$1;}
 |  statements statement {$$=$1; $$->addSibling($2);}
-|  LBRACE statements RBRACE{$$ = $2;}
+|  statements block{$$ = $1;$$->addSibling($2);
+}
 ;
-
+block
+: LBRACE statements RBRACE{
+    TreeNode* node = new TreeNode(lineno, NODE_STMT);
+    node->stype = STMT_BLOCK;
+    node->addChild($2);
+    $$ = node;
+}
+;
+sentense: block {$$=$1;} | statement {$$=$1;}
 statement
 : SEMICOLON  {$$ = new TreeNode(lineno, NODE_STMT); $$->stype = STMT_SKIP;}
 | declaration SEMICOLON {$$ = $1;}
 | instruction SEMICOLON {$$ = $1;}
+| IDENTIFIER SADD SEMICOLON {$$ = $1;}
+| IDENTIFIER SSUB SEMICOLON {$$ = $1;}
+| IDENTIFIER ADD_ASSIGN expr {$$ = new TreeNode(lineno, NODE_STMT);$$->stype = STMT_ADD_ASSIGN;$$->addChild($1);$$->addChild($3);}
+| IDENTIFIER SUB_ASSIGN expr {$$ = new TreeNode(lineno, NODE_STMT);$$->stype = STMT_SUB_ASSIGN;$$->addChild($1);$$->addChild($3);}
+| for {$$ = $1;}
 | if_else {$$ = $1;}
-| if {$$ = $1;}
 | while {$$ = $1;}
 | printf {$$ = $1;}
 | scanf {$$ = $1;}
 ;
 
+
+for 
+: FOR LPAREN instructions SEMICOLON bool_instruction SEMICOLON instructions RPAREN sentense{
+    TreeNode *node = new TreeNode(lineno, NODE_STMT);
+    node->stype = STMT_FOR;
+    node->addChild($3);
+    node->addChild($5);
+    node->addChild($7);
+    node->addChild($9);
+    $$ = node;  
+}
+| FOR LPAREN declaration SEMICOLON bool_instruction SEMICOLON instructions RPAREN sentense{
+    TreeNode *node = new TreeNode(lineno, NODE_STMT);
+    node->stype = STMT_FOR;
+    node->addChild($3);
+    node->addChild($5);
+    node->addChild($7);
+    node->addChild($9);
+    $$ = node;  
+}
+;
+
 scanf
-: SCANF LPAREN STRING RPAREN SEMICOLON{
+: SCANF LPAREN STRING COMMA add_table RPAREN SEMICOLON{
     $$ = new TreeNode(lineno, NODE_STMT);
     $$->stype = STMT_SCANF;
     $$->addChild($3);
+    $$->addChild($5);
+}
+;
+
+add_table
+: add_table COMMA add{
+    $$ = $1;
+    $$->addChild($3);
+}
+| add{
+    $$ = $1;
+}
+;
+
+add
+: ADDRESS IDENTIFIER{
+    $$ = new TreeNode(lineno, NODE_EXPR);
+    $$->optype = OP_AD;
+    $$->addChild($2);
 }
 ;
 
@@ -64,10 +128,16 @@ printf
     $$->stype = STMT_PRINTF;
     $$->addChild($3);
 }
+| PRINTF LPAREN STRING COMMA exprs RPAREN SEMICOLON{
+    $$ = new TreeNode(lineno, NODE_STMT);
+    $$->stype = STMT_PRINTF;
+    $$->addChild($3);
+    $$->addChild($5);
+}
 ;
 
 while
-: WHILE bool_instruction statements{
+: WHILE bool_instructions sentense{
     TreeNode *node = new TreeNode(lineno, NODE_STMT);
     node->stype = STMT_WHILE;
     node->addChild($2);
@@ -77,7 +147,7 @@ while
 ;
 
 if_else
-: IF bool_instruction statements ELSE statements{
+: IF bool_instructions sentense ELSE sentense %prec UP_THAN_ELSE{
     TreeNode *node = new TreeNode(lineno, NODE_STMT);
     node->stype = STMT_IF;
     node->addChild($2);
@@ -85,10 +155,7 @@ if_else
     node->addChild($5);
     $$ = node;
 }
-;
-
-if
-: IF bool_instruction statements{
+| IF bool_instructions sentense{
     TreeNode *node = new TreeNode(lineno, NODE_STMT);
     node->stype = STMT_IF;
     node->addChild($2);
@@ -98,7 +165,7 @@ if
 ;
 
 bool_instructions
-: LPAREN bool_instructions LPAREN{$$ = $2;}
+: LPAREN bool_instructions RPAREN{$$ = $2;}
 | bool_instructions OR bool_instructions{
     TreeNode *node = new TreeNode(lineno, NODE_EXPR);
     $$ = node;
@@ -119,7 +186,6 @@ bool_instructions
     $$->optype = OP_NOT;
     $$->addChild($2);
 }
-
 | bool_instruction{$$ = $1;}
 ;
 
@@ -157,14 +223,14 @@ bool_instruction
 }
 | bool_instruction EQUAL bool_instruction{
     $$ = new TreeNode(lineno, NODE_EXPR);
-    $$->optype = OP_LE;
+    $$->optype = OP_EQ;
     $$->addChild($1);
     $$->addChild($3);
 }
 ;
 
 declaration
-: T instructions SEMICOLON{
+: T instructions{
     $$ = new TreeNode(lineno, NODE_STMT);
     $$->stype = STMT_DECL;
     $$->addChild($1);
@@ -195,6 +261,25 @@ instruction
     $$->addChild($1);
     $$->addChild($3);
 }
+| IDENTIFIER ADD_ASSIGN expr {
+    $$ = new TreeNode(lineno, NODE_STMT);
+    $$->stype = STMT_ADD_ASSIGN;
+    $$->addChild($1);
+    $$->addChild($3);
+}
+| IDENTIFIER SUB_ASSIGN expr {
+    $$ = new TreeNode(lineno, NODE_STMT);
+    $$->stype = STMT_SUB_ASSIGN;
+    $$->addChild($1);
+    $$->addChild($3);
+}
+| expr SADD{
+    $$ = new TreeNode(lineno, NODE_EXPR);
+    $$->optype = OP_N;
+    $$->addChild($2);
+}
+;
+
 idlist
 :
 idlist COMMA IDENTIFIER{
@@ -229,6 +314,16 @@ expr
     $$->optype=OP_SUB;
     $$->addChild($1);
     $$->addChild($3);
+}
+| SUB expr %prec NSUB{
+    $$=new TreeNode(lineno,NODE_EXPR);
+    $$->optype=OP_N;
+    $$->addChild($2);
+}
+| ADD expr %prec NADD{
+    $$=new TreeNode(lineno, NODE_EXPR);
+    $$->optype = OP_P;
+    $$->addChild($2);
 }
 | expr MUL expr{
     $$=new TreeNode($1->lineno,NODE_EXPR);

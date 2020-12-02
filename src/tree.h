@@ -35,11 +35,15 @@ enum OperatorType
     OP_NOT,
     OP_SADD,
     OP_SSUB,
+    OP_N,
+    OP_P,
+    OP_AD, 
 };
 
 enum ConstType{
     CONST_INT,
-    CONST_STRING
+    CONST_STRING,
+    CONST_CHAR,
 };
 
 enum StmtType {
@@ -57,7 +61,9 @@ enum StmtType {
     STMT_FOR,
     STMT_SCANF,
     STMT_PRINTF,
-    STMT_DOMAIN,
+    STMT_BLOCK,
+    STMT_ADD_ASSIGN,
+    STMT_SUB_ASSIGN,
     STMT_RETURN
 
 }
@@ -92,6 +98,7 @@ public:
     char ch_val;
     bool b_val;
     string str_val;
+    int block_id;
     string var_name;
 public:
      string nodeType2String ();
@@ -102,6 +109,22 @@ public:
 
 public:
     TreeNode(int lineno, NodeType type);
+};
+
+struct thing{
+        string T;
+        string N;
+        thing *next;
+    };
+
+struct BlockNode{
+    int nodeID;
+    BlockNode * father = nullptr;
+    BlockNode * child = nullptr;
+    BlockNode * sibling = nullptr;
+    thing * name;
+    void addChild(BlockNode *);
+    BlockNode(int nodeID);
 };
 
 #endif
